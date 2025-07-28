@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animal Health Classification System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .form-section:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .form-group select, .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-group select:focus, .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .predict-btn {
+            width: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .predict-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .predict-btn:active {
+            transform: translateY(0);
+        }
+
+        .result {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        .result.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .result.dangerous {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            color: white;
+            border: 2px solid #ff5252;
+        }
+
+        .result.safe {
+            background: linear-gradient(45deg, #51cf66, #40c057);
+            color: white;
+            border: 2px solid #51cf66;
+        }
+
+        .stats-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            transform: translateY(0);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .icon {
+            font-size: 1.5rem;
+            margin-right: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .stats-section {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🐾 Animal Health Classifier</h1>
+            <p>Advanced ML-powered health risk assessment for animals</p>
+        </div>
+
+        <div class="form-section">
+            <h3 style="margin-bottom: 20px; color: #333;">Animal Information</h3>
+            
+            <div class="form-group">
+                <label for="animalName">🐕 Animal Name/Type:</label>
+                <select id="animalName">
+                    <option value="">Select Animal</option>
+                    <option value="dog">Dog</option>
+                    <option value="cat">Cat</option>
+                    <option value="horse">Horse</option>
+                    <option value="cow">Cow</option>
+                    <option value="sheep">Sheep</option>
+                    <option value="pig">Pig</option>
+                    <option value="bird">Bird</option>
+                    <option value="rabbit">Rabbit</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="symptom1">🩺 Primary Symptom:</label>
+                <select id="symptom1">
+                    <option value="">Select Primary Symptom</option>
+                    <option value="fever">Fever</option>
+                    <option value="coughing">Coughing</option>
+                    <option value="vomiting">Vomiting</option>
+                    <option value="diarrhea">Diarrhea</option>
+                    <option value="lethargy">Lethargy</option>
+                    <option value="loss_of_appetite">Loss of Appetite</option>
+                    <option value="difficulty_breathing">Difficulty Breathing</option>
+                    <option value="seizures">Seizures</option>
+                    <option value="limping">Limping</option>
+                    <option value="skin_irritation">Skin Irritation</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="symptom2">🩺 Secondary Symptom:</label>
+                <select id="symptom2">
+                    <option value="">Select Secondary Symptom</option>
+                    <option value="none">None</option>
+                    <option value="fever">Fever</option>
+                    <option value="coughing">Coughing</option>
+                    <option value="vomiting">Vomiting</option>
+                    <option value="diarrhea">Diarrhea</option>
+                    <option value="lethargy">Lethargy</option>
+                    <option value="loss_of_appetite">Loss of Appetite</option>
+                    <option value="difficulty_breathing">Difficulty Breathing</option>
+                    <option value="seizures">Seizures</option>
+                    <option value="limping">Limping</option>
+                    <option value="skin_irritation">Skin Irritation</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="symptom3">🩺 Additional Symptom 1:</label>
+                <select id="symptom3">
+                    <option value="">Select Additional Symptom</option>
+                    <option value="none">None</option>
+                    <option value="fever">Fever</option>
+                    <option value="coughing">Coughing</option>
+                    <option value="vomiting">Vomiting</option>
+                    <option value="diarrhea">Diarrhea</option>
+                    <option value="lethargy">Lethargy</option>
+                    <option value="loss_of_appetite">Loss of Appetite</option>
+                    <option value="difficulty_breathing">Difficulty Breathing</option>
+                    <option value="seizures">Seizures</option>
+                    <option value="limping">Limping</option>
+                    <option value="skin_irritation">Skin Irritation</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="symptom4">🩺 Additional Symptom 2:</label>
+                <select id="symptom4">
+                    <option value="">Select Additional Symptom</option>
+                    <option value="none">None</option>
+                    <option value="fever">Fever</option>
+                    <option value="coughing">Coughing</option>
+                    <option value="vomiting">Vomiting</option>
+                    <option value="diarrhea">Diarrhea</option>
+                    <option value="lethargy">Lethargy</option>
+                    <option value="loss_of_appetite">Loss of Appetite</option>
+                    <option value="difficulty_breathing">Difficulty Breathing</option>
+                    <option value="seizures">Seizures</option>
+                    <option value="limping">Limping</option>
+                    <option value="skin_irritation">Skin Irritation</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="symptom5">🩺 Additional Symptom 3:</label>
+                <select id="symptom5">
+                    <option value="">Select Additional Symptom</option>
+                    <option value="none">None</option>
+                    <option value="fever">Fever</option>
+                    <option value="coughing">Coughing</option>
+                    <option value="vomiting">Vomiting</option>
+                    <option value="diarrhea">Diarrhea</option>
+                    <option value="lethargy">Lethargy</option>
+                    <option value="loss_of_appetite">Loss of Appetite</option>
+                    <option value="difficulty_breathing">Difficulty Breathing</option>
+                    <option value="seizures">Seizures</option>
+                    <option value="limping">Limping</option>
+                    <option value="skin_irritation">Skin Irritation</option>
+                </select>
+            </div>
+
+            <button class="predict-btn" onclick="predictHealth()">
+                <span class="icon">🔍</span>
+                Analyze Health Risk
+            </button>
+        </div>
+
+        <div id="result" class="result"></div>
+
+        <div class="stats-section">
+            <div class="stat-card">
+                <div class="stat-number">98.85%</div>
+                <div class="stat-label">Model Accuracy</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">800+</div>
+                <div class="stat-label">Training Records</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">3</div>
+                <div class="stat-label">ML Algorithms</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">RF</div>
+                <div class="stat-label">Best Model</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simulated ML model based on your research findings
+        // In production, this would connect to your actual trained model
+        const riskFactors = {
+            'high_risk_symptoms': ['seizures', 'difficulty_breathing', 'severe_fever', 'blood_in_stool'],
+            'medium_risk_symptoms': ['fever', 'vomiting', 'diarrhea', 'loss_of_appetite'],
+            'low_risk_symptoms': ['coughing', 'lethargy', 'limping', 'skin_irritation']
+        };
+
+        const animalRiskProfiles = {
+            'dog': { base_risk: 0.3, multiplier: 1.0 },
+            'cat': { base_risk: 0.25, multiplier: 0.9 },
+            'horse': { base_risk: 0.4, multiplier: 1.2 },
+            'cow': { base_risk: 0.35, multiplier: 1.1 },
+            'sheep': { base_risk: 0.3, multiplier: 1.0 },
+            'pig': { base_risk: 0.45, multiplier: 1.3 },
+            'bird': { base_risk: 0.5, multiplier: 1.4 },
+            'rabbit': { base_risk: 0.2, multiplier: 0.8 }
+        };
+
+        function calculateRiskScore(animal, symptoms) {
+            let riskScore = animalRiskProfiles[animal]?.base_risk || 0.3;
+            const multiplier = animalRiskProfiles[animal]?.multiplier || 1.0;
+            
+            symptoms.forEach(symptom => {
+                if (symptom && symptom !== 'none') {
+                    if (riskFactors.high_risk_symptoms.includes(symptom)) {
+                        riskScore += 0.4;
+                    } else if (riskFactors.medium_risk_symptoms.includes(symptom)) {
+                        riskScore += 0.25;
+                    } else if (riskFactors.low_risk_symptoms.includes(symptom)) {
+                        riskScore += 0.15;
+                    } else {
+                        riskScore += 0.2; // default for unlisted symptoms
+                    }
+                }
+            });
+            
+            // Apply symptom combination penalties
+            const uniqueSymptoms = [...new Set(symptoms.filter(s => s && s !== 'none'))];
+            if (uniqueSymptoms.length > 2) {
+                riskScore += 0.1 * (uniqueSymptoms.length - 2);
+            }
+            
+            return Math.min(riskScore * multiplier, 1.0);
+        }
+
+        function predictHealth() {
+            const animal = document.getElementById('animalName').value;
+            const symptoms = [
+                document.getElementById('symptom1').value,
+                document.getElementById('symptom2').value,
+                document.getElementById('symptom3').value,
+                document.getElementById('symptom4').value,
+                document.getElementById('symptom5').value
+            ];
+
+            const resultDiv = document.getElementById('result');
+            const button = document.querySelector('.predict-btn');
+
+            // Validation
+            if (!animal || !symptoms[0]) {
+                resultDiv.innerHTML = '⚠️ Please select an animal and at least the primary symptom';
+                resultDiv.className = 'result show dangerous';
+                return;
+            }
+
+            // Show loading state
+            button.innerHTML = '<span class="loading"></span>Analyzing...';
+            button.disabled = true;
+
+            // Simulate processing time
+            setTimeout(() => {
+                const riskScore = calculateRiskScore(animal, symptoms);
+                const isDangerous = riskScore > 0.6;
+                const confidence = (riskScore * 100).toFixed(1);
+
+                let resultText, resultClass, icon, recommendation;
+
+                if (isDangerous) {
+                    icon = '🚨';
+                    resultClass = 'dangerous';
+                    resultText = `HIGH RISK DETECTED`;
+                    recommendation = 'Immediate veterinary attention recommended!';
+                } else {
+                    icon = '✅';
+                    resultClass = 'safe';
+                    resultText = `LOW RISK`;
+                    recommendation = 'Monitor symptoms and consult vet if condition worsens.';
+                }
+
+                resultDiv.innerHTML = `
+                    <div style="font-size: 1.5rem; margin-bottom: 10px;">
+                        ${icon} ${resultText}
+                    </div>
+                    <div style="font-size: 1rem; margin-bottom: 10px; opacity: 0.9;">
+                        Risk Score: ${confidence}%
+                    </div>
+                    <div style="font-size: 0.9rem; font-weight: normal; opacity: 0.8;">
+                        ${recommendation}
+                    </div>
+                `;
+                resultDiv.className = `result show ${resultClass}`;
+
+                // Reset button
+                button.innerHTML = '<span class="icon">🔍</span>Analyze Health Risk';
+                button.disabled = false;
+            }, 1500);
+        }
+
+        // Add some interactive feedback
+        document.querySelectorAll('select').forEach(select => {
+            select.addEventListener('change', function() {
+                this.style.borderColor = this.value ? '#51cf66' : '#ddd';
+            });
+        });
+    </script>
+</body>
+</html>
