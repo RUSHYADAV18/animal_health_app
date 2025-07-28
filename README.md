@@ -1,5 +1,5 @@
 #Animal Health Classification App
-This is a simple *machine learning web app* built using *Streamlit. It predicts the **health status of animals* based on symptoms using a trained *Support Vector Machine (SVM)* model.
+This is a simple machine learning web app built using Streamlit. It predicts the health status of animals based on symptoms using a trained Support Vector Machine (SVM) model.
 #HOW IT WORKS
 1. The app takes input for 5 types of symptoms:
    - Blood/Brain Disease
